@@ -1,13 +1,13 @@
 /**
  * Tencent is pleased to support the open source community by making Tars available.
- *
+ * <p>
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
- *
+ * <p>
  * Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- *
+ * <p>
  * https://opensource.org/licenses/BSD-3-Clause
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the
@@ -102,7 +102,7 @@ public final class TarsUtil {
 
     public static <T extends Comparable<T>> int compareTo(List<T> l, List<T> r) {
         Iterator<T> li = l.iterator(), ri = r.iterator();
-        for (; li.hasNext() && ri.hasNext();) {
+        for (; li.hasNext() && ri.hasNext(); ) {
             int n = li.next().compareTo(ri.next());
             if (n != 0) return n;
         }
@@ -366,7 +366,7 @@ public final class TarsUtil {
     private static final byte[] lowDigits;
 
     static {
-        final byte[] digits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        final byte[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
         int i;
         byte[] high = new byte[256];

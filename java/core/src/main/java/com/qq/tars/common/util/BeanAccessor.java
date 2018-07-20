@@ -154,7 +154,7 @@ public class BeanAccessor {
 
         Class<?> type = field.getType();
         if (type == boolean.class) {
-            return unsafe.getBoolean(bean, offset);
+            return unsafe.getInt(bean, offset) != 0;
         } else if (type == byte.class) {
             return unsafe.getByte(bean, offset);
         } else if (type == short.class) {
@@ -199,7 +199,7 @@ public class BeanAccessor {
 
         Class<?> type = field.getType();
         if (type == boolean.class) {
-            unsafe.putBoolean(bean, offset, ((Boolean) data).booleanValue());
+            unsafe.putInt(bean, offset, (boolean)data ? 1 : 0);
         } else if (type == byte.class) {
             unsafe.putByte(bean, offset, ((Byte) data).byteValue());
         } else if (type == short.class) {

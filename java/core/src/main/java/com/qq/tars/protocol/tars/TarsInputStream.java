@@ -189,7 +189,7 @@ public final class TarsInputStream {
     }
 
     public boolean read(boolean b, int tag, boolean isRequire) {
-        byte c = read((byte) 0x0, tag, isRequire);
+        byte c = read((byte)(b ? 1 : 0), tag, isRequire);
         return c != 0;
     }
 
@@ -852,7 +852,7 @@ public final class TarsInputStream {
         if (o instanceof Byte) {
             return Byte.valueOf(read((byte) 0x0, tag, isRequire));
         } else if (o instanceof Boolean) {
-            return Boolean.valueOf(read(false, tag, isRequire));
+            return Boolean.valueOf(read(o == null ? false : ((Boolean) o).booleanValue(), tag, isRequire));
         } else if (o instanceof Short) {
             return Short.valueOf(read((short) 0, tag, isRequire));
         } else if (o instanceof Integer) {

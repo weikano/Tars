@@ -1,13 +1,13 @@
 /**
  * Tencent is pleased to support the open source community by making Tars available.
- *
+ * <p>
  * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
- *
+ * <p>
  * Licensed under the BSD 3-Clause License (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- *
+ * <p>
  * https://opensource.org/licenses/BSD-3-Clause
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the
@@ -49,7 +49,8 @@ import com.qq.tars.protocol.tars.support.TarsStructInfo;
 import com.qq.tars.protocol.tars.support.TarsStrutPropertyInfo;
 
 public class TarsHelper {
-
+    private static ThreadLocal<HashMap<Class, Integer>> RECURSIVE_CACHE = new ThreadLocal<>();
+    private static HashMap<Class, Integer> recursiveCache = new HashMap<>();
     public final static int PACKAGE_MAX_LENGTH = 10 * 1024 * 1024;
     public final static int HEAD_SIZE = 4;
 
@@ -106,17 +107,27 @@ public class TarsHelper {
     public static final Double STAMP_DOUBLE = Double.valueOf(0);
     public static final String STAMP_STRING = "";
 
-    public static final boolean[] STAMP_BOOLEAN_ARRAY = new boolean[] { true };
-    public static final byte[] STAMP_BYTE_ARRAY = new byte[] { 0 };
-    public static final short[] STAMP_SHORT_ARRAY = new short[] { 0 };
-    public static final int[] STAMP_INT_ARRAY = new int[] { 0 };
-    public static final long[] STAMP_LONG_ARRAY = new long[] { 0 };
-    public static final float[] STAMP_FLOAT_ARRAY = new float[] { 0 };
-    public static final double[] STAMP_DOUBLE_ARRAY = new double[] { 0 };
+    public static final boolean[] STAMP_BOOLEAN_ARRAY = new boolean[]{true};
+    public static final byte[] STAMP_BYTE_ARRAY = new byte[]{0};
+    public static final short[] STAMP_SHORT_ARRAY = new short[]{0};
+    public static final int[] STAMP_INT_ARRAY = new int[]{0};
+    public static final long[] STAMP_LONG_ARRAY = new long[]{0};
+    public static final float[] STAMP_FLOAT_ARRAY = new float[]{0};
+    public static final double[] STAMP_DOUBLE_ARRAY = new double[]{0};
     public static final Map<String, String> STAMP_MAP = new HashMap<String, String>();
 
     static {
         STAMP_MAP.put("", "");
+    }
+
+    public static synchronized void registerRecursive(Class<?> clz, int depths) {
+        recursiveCache.put(clz, depths);
+//        HashMap<Class, Integer> map = RECURSIVE_CACHE.get();
+//        if(map == null) {
+//            map = new HashMap<>();
+//        }
+//        map.put(clz, depths);
+//        RECURSIVE_CACHE.set(map);
     }
 
     private static Map<Class<?>, TarsStructInfo> tarsStructCache = new HashMap<Class<?>, TarsStructInfo>();
@@ -198,7 +209,7 @@ public class TarsHelper {
         return null;
     }
 
-    public static Object getParameterStamp(Type type) {
+    public static Object getParameterStamp(Type type, int[] depth) {
         if (type instanceof Class<?>) {
             Class<?> clazz = (Class<?>) type;
             if (CommonUtils.isJavaBase(clazz) || clazz.isArray() || isStruct(clazz)) {
@@ -217,22 +228,24 @@ public class TarsHelper {
                 Type keyType = types[0];
                 Type valueType = types[1];
 
-                Object key = getParameterStamp(keyType);
-                Object value = getParameterStamp(valueType);
+                Object key = getParameterStamp(keyType, depth);
+                Object value = getParameterStamp(valueType, depth);
                 Map<Object, Object> map = new HashMap<Object, Object>(1);
                 map.put(key, value);
                 return map;
             } else if (isCollection(clazz)) {
                 Type[] types = parameterizedType.getActualTypeArguments();
                 Type valueType = types[0];
-                Object e = getParameterStamp(valueType);
                 List<Object> list = new ArrayList<Object>(1);
-                list.add(e);
+                if (recursive(valueType)) {
+                    Object e = getParameterStamp(valueType, depth);
+                    list.add(e);
+                }
                 return list;
             } else if (isHolder(clazz)) {
                 Type[] types = parameterizedType.getActualTypeArguments();
                 if (Holder.class == clazz) {
-                    return getParameterStamp(types[0]);
+                    return getParameterStamp(types[0], depth);
                 } else {
                     throw new RuntimeException("getStamp for Holder Not Implement Yet, parameterizedType=" + parameterizedType);
                 }
@@ -240,7 +253,7 @@ public class TarsHelper {
         } else if (type instanceof GenericArrayType) {
             GenericArrayType genericArrayType = (GenericArrayType) type;
             Type componentType = genericArrayType.getGenericComponentType();
-            Object component = getParameterStamp(componentType);
+            Object component = getParameterStamp(componentType, depth);
             Object[] array = (Object[]) Array.newInstance(component.getClass(), 1);
             array[0] = component;
             return array;
@@ -254,7 +267,9 @@ public class TarsHelper {
         }
 
         TarsMethodParameterInfo parameterInfo = new TarsMethodParameterInfo();
-        Object stamp = getParameterStamp(genericParameterType);
+
+        int[] maxDepth = {10};
+        Object stamp = getParameterStamp(genericParameterType, maxDepth);
         parameterInfo.setStamp(stamp);
         return parameterInfo;
     }
@@ -287,8 +302,9 @@ public class TarsHelper {
                             TarsStrutPropertyInfo propertyInfo = new TarsStrutPropertyInfo();
                             Type type = field.getGenericType();
                             Object stamp = null;
+                            int[] maxDepth = {10};
                             try {
-                                stamp = getParameterStamp(type);
+                                stamp = getParameterStamp(type, maxDepth);
                             } catch (Exception e) {
                                 throw new RuntimeException("class[" + clazz + "] , Field[" + field.getName() + "] create stamp failed:" + e.getMessage(), e);
                             }
@@ -368,11 +384,13 @@ public class TarsHelper {
                 parameterInfo.setOrder(isAsync(method.getName()) ? order : order + 1);
                 parameterInfo.setAnnotations(allParameterAnnotations[order]);
                 if (!isCallback(allParameterAnnotations[order])) {
-                    parameterInfo.setStamp(TarsHelper.getParameterStamp(genericParameterType));
+
+                    int[] maxDepth = {10};
+                    parameterInfo.setStamp(TarsHelper.getParameterStamp(genericParameterType, maxDepth));
                 }
-                
+
                 if (isRoutekey(allParameterAnnotations[order])) {
-                	methodInfo.setRouteKeyIndex(order);
+                    methodInfo.setRouteKeyIndex(order);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("failed to create parameter info:" + method + ", index=[" + order + "]", e);
@@ -383,7 +401,8 @@ public class TarsHelper {
         Type returnType = method.getGenericReturnType();
         if (returnType != void.class) {
             TarsMethodParameterInfo returnInfo = new TarsMethodParameterInfo();
-            returnInfo.setStamp(TarsHelper.getParameterStamp(returnType));
+            int[] maxDepth = {10};
+            returnInfo.setStamp(TarsHelper.getParameterStamp(returnType, maxDepth));
             returnInfo.setName("result");
             returnInfo.setOrder(0);
             methodInfo.setReturnInfo(returnInfo);
@@ -456,17 +475,17 @@ public class TarsHelper {
         }
         return false;
     }
-    
+
     public static boolean isRoutekey(Annotation[] annotations) {
-    	if (annotations == null || annotations.length < 0) {
-    		return false;
-    	}
-    	for (Annotation annotation : annotations) {
-    		if (annotation.annotationType() ==TarsRouteKey.class) {
-    			return true;
-    		}
-    	}
-    	return false;
+        if (annotations == null || annotations.length < 0) {
+            return false;
+        }
+        for (Annotation annotation : annotations) {
+            if (annotation.annotationType() == TarsRouteKey.class) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isStruct(Class<?> clazz) {
@@ -576,5 +595,21 @@ public class TarsHelper {
 
     public static Object getHolderValue(Object holder) throws Exception {
         return BeanAccessor.getBeanValue(holder, "value");
+    }
+
+    private synchronized static boolean recursive(Type type) {
+        if (type instanceof Class<?>) {
+            HashMap<Class, Integer> map = RECURSIVE_CACHE.get();
+            if(map == null) {
+                RECURSIVE_CACHE.set((HashMap<Class, Integer>) recursiveCache.clone());
+            }
+            map = RECURSIVE_CACHE.get();
+            if (map.containsKey(type)) {
+                int depths = map.get(type);
+                map.put((Class) type, depths - 1);
+                return map.get(type) >= 0;
+            }
+        }
+        return true;
     }
 }
