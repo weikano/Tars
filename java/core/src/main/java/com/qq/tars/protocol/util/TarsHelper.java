@@ -567,26 +567,27 @@ public class TarsHelper {
     }
 
     public static Object getPropertyDefaultValue(Object value) {
-        if (value == null) {
-            return null;
-        } else if (value instanceof Integer && ((Integer) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Long && ((Long) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Double && ((Double) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Float && ((Float) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Short && ((Short) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Byte && ((Byte) value).intValue() != 0) {
-            return value;
-        } else if (value instanceof Boolean && ((Boolean) value).booleanValue() != false) {
-            return value;
-        } else if (value instanceof String) {
-            return value;
-        }
-        return null;
+//        if (value == null) {
+//            return null;
+//        } else if (value instanceof Integer && ((Integer) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Long && ((Long) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Double && ((Double) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Float && ((Float) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Short && ((Short) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Byte && ((Byte) value).intValue() != 0) {
+//            return value;
+//        } else if (value instanceof Boolean && ((Boolean) value).booleanValue() != false) {
+//            return value;
+//        } else if (value instanceof String) {
+//            return value;
+//        }
+//        return null;
+        return value;
     }
 
     public static void setHolderValue(Object holder, Object value) throws Exception {

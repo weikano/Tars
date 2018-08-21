@@ -156,7 +156,7 @@ public class BeanAccessor {
         if (type == boolean.class) {
             return unsafe.getInt(bean, offset) != 0;
         } else if (type == byte.class) {
-            return unsafe.getByte(bean, offset);
+            return (byte)unsafe.getInt(bean, offset);
         } else if (type == short.class) {
             return unsafe.getShort(bean, offset);
         } else if (type == char.class) {
@@ -199,9 +199,9 @@ public class BeanAccessor {
 
         Class<?> type = field.getType();
         if (type == boolean.class) {
-            unsafe.putInt(bean, offset, (boolean)data ? 1 : 0);
+            unsafe.putInt(bean, offset, ((boolean)data ? 1 : 0));
         } else if (type == byte.class) {
-            unsafe.putByte(bean, offset, ((Byte) data).byteValue());
+            unsafe.putInt(bean, offset, ((Byte) data).intValue());
         } else if (type == short.class) {
             unsafe.putShort(bean, offset, ((Short) data).shortValue());
         } else if (type == char.class) {
