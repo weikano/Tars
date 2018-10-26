@@ -252,17 +252,19 @@ public class Tars2JavaMojo extends AbstractMojo {
         out.println("package " + packageName + ";");
         out.println();
 
-        out.println("import com.qq.tars.protocol.util.*;");
-        out.println("import com.qq.tars.protocol.annotation.*;");
-        out.println("import com.qq.tars.protocol.tars.*;");
-        out.println("import com.qq.tars.protocol.tars.annotation.*;");
+        out.println("import com.kingsunedu.sdk.tars.*;");
+        out.println("import com.kingsunedu.sdk.tars.annotations.*;");
+        out.println("import com.kingsunedu.sdk.tars.util.TarsUtil;");
+//        out.println("import com.qq.tars.protocol.annotation.*;");
+//        out.println("import com.qq.tars.protocol.tars.*;");
+//        out.println("import com.qq.tars.protocol.tars.annotation.*;");
         out.println();
         printDoc(out, getDoc(struct, ""));
         out.println("@TarsStruct");
         if (key == null) {
-            out.println("public class " + struct.structName() + " {");
+            out.println("public class " + struct.structName() + " implements ITarsBean {");
         } else {
-            out.println("public class " + struct.structName() + " implements Comparable<" + struct.structName() + "> {");
+            out.println("public class " + struct.structName() + " implements ITarsBean, Comparable<" + struct.structName() + "> {");
         }
         out.println();
 
@@ -379,7 +381,7 @@ public class Tars2JavaMojo extends AbstractMojo {
         out.println();
 
         //writeTo
-        out.println("\tpublic void writeTo(TarsOutputStream _os) {");
+        out.println("@Override\tpublic void writeTo(TarsOutputStream _os) {");
         for (TarsStructMember m : struct.memberList()) {
             if (!m.isRequire()) {
                 if (m.memberType().isPrimitive() || isEnum(m.memberType(), nsMap)) {
@@ -417,7 +419,7 @@ public class Tars2JavaMojo extends AbstractMojo {
         out.println();
 
         //readFrom
-        out.println("\tpublic void readFrom(TarsInputStream _is) {");
+        out.println("@Override\tpublic void readFrom(TarsInputStream _is) {");
         for (TarsStructMember m : struct.memberList()) {
             String type = null;
             boolean isenum = isEnum(m.memberType(), nsMap);
